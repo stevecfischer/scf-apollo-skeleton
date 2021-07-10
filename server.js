@@ -1,40 +1,24 @@
-const { ApolloServer } = require("apollo-server-express");
+const express = require('express');
+const { ApolloServer } = require('apollo-server-express');
+const { typeDefs, resolvers } = require('schema/');
 
-const express = require("express");
-require("dotenv").config();
-
-//graphql server
-
-//types query/mutation/subscription
-const typeDefs = `
-    type Query {
-        totalPosts: Int!
-    }
-`;
-
-//resolvers
-const resolvers = {
-    Query: {
-        totalPosts: () => 42,
-    },
-};
-
-const apolloServer = new ApolloServer({
-    typeDefs,
-    resolvers,
-});
-
-//express server
-const app = express();
-
-apolloServer.applyMiddleware({ app });
-
-app.get("/rest", (req, res) => {
-    res.json({
-        data: "API is working...",
+async function startApolloServer() {
+    const app = express();
+    const server = new ApolloServer({
+        typeDefs,
+        resolvers,
     });
-});
+    await server.start();
 
-app.listen(process.env.PORT, () => {
-    console.log(`🚀 Server is running at http://localhost:${process.env.PORT}`);
-});
+    server.applyMiddleware({ app });
+
+    app.use((req, res) => {
+        res.status(200);
+        res.send('Hello!');
+        res.end();
+    });
+
+    await new Promise(resolve => app.listen({ port: 4000 }, resolve));
+    console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`);
+    return { server, app };
+}
